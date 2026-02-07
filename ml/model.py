@@ -1,128 +1,212 @@
-import pickle
+"""
+Model-related functions: training, inference, persistence, and slice metrics.
+"""
+
+from __future__ import annotations
+
+import os
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import joblib
+import numpy as np
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import fbeta_score, precision_score, recall_score
-from ml.data import process_data
-# TODO: add necessary import
+
 
 # Optional: implement hyperparameter tuning.
-def train_model(X_train, y_train):
+def train_model(
+    X_train: Union[np.ndarray, Any],
+    y_train: Union[np.ndarray, Any],
+) -> Any:
     """
     Trains a machine learning model and returns it.
 
     Inputs
     ------
-    X_train : np.array
+    X_train : np.ndarray or sparse matrix
         Training data.
-    y_train : np.array
+    y_train : np.ndarray
         Labels.
+
     Returns
     -------
-    model
-        Trained machine learning model.
+    model : Any
+        Trained model.
     """
-    # TODO: implement the function
-    pass
+    # TODO: implement training
+    # A strong, simple baseline:
+    model = LogisticRegression(max_iter=2000)
+
+    model.fit(X_train, y_train)
+    return model
 
 
-def compute_model_metrics(y, preds):
+def compute_model_metrics(
+    y: np.ndarray,
+    preds: np.ndarray,
+) -> Tuple[float, float, float]:
     """
-    Validates the trained machine learning model using precision, recall, and F1.
+    Compute precision, recall, and fbeta.
 
-    Inputs
-    ------
-    y : np.array
-        Known labels, binarized.
-    preds : np.array
-        Predicted labels, binarized.
-    Returns
-    -------
-    precision : float
-    recall : float
-    fbeta : float
+    Returns (precision, recall, fbeta).
     """
-    fbeta = fbeta_score(y, preds, beta=1, zero_division=1)
-    precision = precision_score(y, preds, zero_division=1)
-    recall = recall_score(y, preds, zero_division=1)
+    precision = precision_score(y, preds, zero_division=0)
+    recall = recall_score(y, preds, zero_division=0)
+    fbeta = fbeta_score(y, preds, beta=1, zero_division=0)
     return precision, recall, fbeta
 
 
-def inference(model, X):
-    """ Run model inferences and return the predictions.
+def inference(
+    model: Any,
+    X: Union[np.ndarray, Any],
+) -> np.ndarray:
+    """
+    Run model inference and return predictions.
 
     Inputs
     ------
-    model : ???
-        Trained machine learning model.
-    X : np.array
-        Data used for prediction.
+    model : Any
+        Trained model object with .predict().
+    X : np.ndarray or sparse matrix
+        Data for inference.
+
     Returns
     -------
-    preds : np.array
+    preds : np.ndarray
         Predictions from the model.
     """
-    # TODO: implement the function
-    pass
+    # TODO: implement inference
+    return model.predict(X)
 
-def save_model(model, path):
-    """ Serializes model to a file.
+
+def save_model(
+    model: Any,
+    encoder: Optional[Any] = None,
+    lb: Optional[Any] = None,
+    model_path: str = "model/model.joblib",
+    encoder_path: str = "model/encoder.joblib",
+    lb_path: str = "model/lb.joblib",
+) -> None:
+    """
+    Save trained model and optional preprocessing artifacts.
 
     Inputs
     ------
-    model
-        Trained machine learning model or OneHotEncoder.
-    path : str
-        Path to save pickle file.
+    model : Any
+        Trained model.
+    encoder : Any, optional
+        Fitted OneHotEncoder (or similar).
+    lb : Any, optional
+        Fitted LabelBinarizer (or similar).
+    model_path : str
+    encoder_path : str
+    lb_path : str
     """
-    # TODO: implement the function
-    pass
+    # TODO: implement save
+    os.makedirs(os.path.dirname(model_path), exist_ok=True)
 
-def load_model(path):
-    """ Loads pickle file from `path` and returns it."""
-    # TODO: implement the function
-    pass
+    joblib.dump(model, model_path)
+
+    if encoder is not None:
+        joblib.dump(encoder, encoder_path)
+
+    if lb is not None:
+        joblib.dump(lb, lb_path)
+
+
+def load_model(
+    model_path: str = "model/model.joblib",
+    encoder_path: str = "model/encoder.joblib",
+    lb_path: str = "model/lb.joblib",
+) -> Tuple[Any, Optional[Any], Optional[Any]]:
+    """
+    Load trained model and optional preprocessing artifacts.
+
+    Returns
+    -------
+    model, encoder, lb
+    """
+    # TODO: implement load
+    model = joblib.load(model_path)
+
+    encoder = joblib.load(encoder_path) if os.path.exists(encoder_path) else None
+    lb = joblib.load(lb_path) if os.path.exists(lb_path) else None
+
+    return model, encoder, lb
 
 
 def performance_on_categorical_slice(
-    data, column_name, slice_value, categorical_features, label, encoder, lb, model
-):
-    """ Computes the model metrics on a slice of the data specified by a column name and
-
-    Processes the data using one hot encoding for the categorical features and a
-    label binarizer for the labels. This can be used in either training or
-    inference/validation.
+    model: Any,
+    data,  # pd.DataFrame
+    categorical_features: List[str],
+    label: str,
+    slice_feature: str,
+    encoder: Any,
+    lb: Any,
+    process_data_fn,
+) -> List[Dict[str, Any]]:
+    """
+    Compute model performance on slices of the data where `slice_feature` is held fixed.
 
     Inputs
     ------
+    model : trained model
     data : pd.DataFrame
-        Dataframe containing the features and label. Columns in `categorical_features`
-    column_name : str
-        Column containing the sliced feature.
-    slice_value : str, int, float
-        Value of the slice feature.
-    categorical_features: list
-        List containing the names of the categorical features (default=[])
+        Raw (unprocessed) dataframe including label column.
+    categorical_features : list[str]
+        List of categorical feature names (for process_data).
     label : str
-        Name of the label column in `X`. If None, then an empty array will be returned
-        for y (default=None)
-    encoder : sklearn.preprocessing._encoders.OneHotEncoder
-        Trained sklearn OneHotEncoder, only used if training=False.
-    lb : sklearn.preprocessing._label.LabelBinarizer
-        Trained sklearn LabelBinarizer, only used if training=False.
-    model : ???
-        Model used for the task.
+        Label column name.
+    slice_feature : str
+        Feature to slice on (must be a column in `data`).
+    encoder : fitted encoder used during training
+    lb : fitted label binarizer used during training
+    process_data_fn : callable
+        Typically ml.data.process_data
 
     Returns
     -------
-    precision : float
-    recall : float
-    fbeta : float
-
+    results : list[dict]
+        Each dict has {feature, value, n, precision, recall, fbeta}
     """
-    # TODO: implement the function
-    X_slice, y_slice, _, _ = process_data(
-        # your code here
-        # for input data, use data in column given as "column_name", with the slice_value 
-        # use training = False
-    )
-    preds = None # your code here to get prediction on X_slice using the inference function
-    precision, recall, fbeta = compute_model_metrics(y_slice, preds)
-    return precision, recall, fbeta
+    # TODO: implement slice performance
+
+    if slice_feature not in data.columns:
+        raise ValueError(f"slice_feature '{slice_feature}' not found in data columns.")
+
+    results: List[Dict[str, Any]] = []
+
+    # Ensure we don't get weird ordering from pandas categoricals
+    unique_values = sorted(data[slice_feature].dropna().unique().tolist())
+
+    for v in unique_values:
+        slice_df = data[data[slice_feature] == v]
+
+        # Skip empty slices just in case
+        if slice_df.shape[0] == 0:
+            continue
+
+        X_slice, y_slice, _, _ = process_data_fn(
+            slice_df,
+            categorical_features=categorical_features,
+            label=label,
+            training=False,
+            encoder=encoder,
+            lb=lb,
+        )
+
+        preds = inference(model, X_slice)
+        precision, recall, fbeta = compute_model_metrics(y_slice, preds)
+
+        results.append(
+            {
+                "feature": slice_feature,
+                "value": v,
+                "n": int(slice_df.shape[0]),
+                "precision": float(precision),
+                "recall": float(recall),
+                "fbeta": float(fbeta),
+            }
+        )
+
+    return results
