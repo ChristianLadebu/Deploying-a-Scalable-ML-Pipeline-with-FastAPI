@@ -1,5 +1,3 @@
-import os
-
 import pandas as pd
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
@@ -28,15 +26,14 @@ class Data(BaseModel):
     hours_per_week: int = Field(..., example=40, alias="hours-per-week")
     native_country: str = Field(..., example="United-States", alias="native-country")
 
+
 app = FastAPI()
+
 
 @app.get("/")
 async def get_root():
     """ Say hello!"""
     return {"message": "Welcome to the Census Income Prediction API!"}
-
-
-
 
 
 @app.post("/data/")
@@ -48,7 +45,7 @@ async def post_inference(data: Data):
     # Here it uses the functionality of FastAPI/Pydantic/etc to deal with this.
     data = {k.replace("_", "-"): [v] for k, v in data_dict.items()}
     data = pd.DataFrame.from_dict(data)
-    
+
     cat_features = [
         "workclass",
         "education",
@@ -59,7 +56,7 @@ async def post_inference(data: Data):
         "sex",
         "native-country",
     ]
-    data["salary"] = "<=50K" 
+    data["salary"] = "<=50K"
 
     data_processed, _, _, _ = process_data(
         data,

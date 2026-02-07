@@ -1,7 +1,5 @@
 from pathlib import Path
 
-import os
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -124,4 +122,3 @@ def test_train_test_split_sizes(census_df):
     # 500 rows total -> 400 train, 100 test
     assert train_df.shape[0] == 400
     assert test_df.shape[0] == 100
-

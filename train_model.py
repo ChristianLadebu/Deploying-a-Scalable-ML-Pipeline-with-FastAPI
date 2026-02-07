@@ -7,7 +7,6 @@ from ml.data import process_data
 from ml.model import (
     compute_model_metrics,
     inference,
-    load_model,
     save_model,
     train_model,
 )

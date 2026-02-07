@@ -9,7 +9,6 @@ print("GET status code:", r.status_code)
 print("GET response:", r.json())
 
 
-
 data = {
     "age": 37,
     "workclass": "Private",
@@ -37,6 +36,3 @@ print("POST response body (first 1000 chars):", r.text[:1000])
 # Only try JSON if it looks like JSON
 if "application/json" in (r.headers.get("content-type") or ""):
     print("POST response JSON:", r.json())
-
-
-
