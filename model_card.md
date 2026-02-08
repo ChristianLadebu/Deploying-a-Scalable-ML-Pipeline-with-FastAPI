@@ -1,7 +1,8 @@
 # Model Card
  
 ## Model Details
-This model is a binary classification model trained to predict whether an individual’s income exceeds $50,000 per year based on demographic and employment-related features from U.S. Census data.
+The model used in this project is a Logistic Regression classifier implemented using the scikit-learn library.
+It is a supervised, linear model designed for binary classification, trained to predict whether an individual’s income exceeds $50K per year based on U.S. Census data.
 
 ## Intended Use
 The model is intended for educational purposes to demonstrate how to build, train, evaluate, and deploy a machine learning pipeline using best practices, including data preprocessing, model evaluation, and fairness assessment.
